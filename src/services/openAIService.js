@@ -13,59 +13,57 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
   }
 
   const prompt = `
-You are an impartial judge evaluating an argument between two participants: Speaker 1 and Speaker 2. Based on their statements, please determine the winner of the argument.
-
-**Evaluation Criteria:**
-1. **Logical Consistency:** How logical and coherent are the arguments presented?
-2. **Emotional Intensity:** How effectively do the participants convey emotions to strengthen their position?
-3. **Persuasiveness:** How persuasive are the arguments in convincing the other party or an external observer?
-4. **Rebuttal Effectiveness:** How well do the participants counter the opposing points?
-5. **Overall Impact:** What is the overall effectiveness of each participant in the argument?
-
-**Output Requirement:**
-Respond with only a JSON object in the following format, without additional commentary or explanations.
-
-**JSON Format:**
-\`\`\`json
-{
-  "scores": {
-    "Speaker 1": {
-      "Logical Consistency": number,
-      "Emotional Intensity": number,
-      "Persuasiveness": number,
-      "Rebuttal Effectiveness": number,
-      "Overall Impact": number
-    },
-    "Speaker 2": {
-      "Logical Consistency": number,
-      "Emotional Intensity": number,
-      "Persuasiveness": number,
-      "Rebuttal Effectiveness": number,
-      "Overall Impact": number
-    }
-  },
-  "justifications": {
-    "Speaker 1": "Brief justification for Speaker 1's scores.",
-    "Speaker 2": "Brief justification for Speaker 2's scores."
-  },
-  "summaries": {
-    "Speaker 1": "Summary of Speaker 1's performance.",
-    "Speaker 2": "Summary of Speaker 2's performance."
-  },
-  "winner": "Speaker 1" or "Speaker 2"
-}
-\`\`\`
-
-Respond with only the JSON object in the specified format.
+  You are an impartial judge evaluating an argument between two participants: Speaker 1 and Speaker 2. Based on their statements, please determine the winner of the argument.
   
-**Transcripts:**
-
-**Speaker 1:**
-${speaker1Transcript}
-
-**Speaker 2:**
-${speaker2Transcript}
-`;
+  **Evaluation Criteria:**
+  1. **Logical Consistency:** How logical and coherent are the arguments presented?
+  2. **Emotional Intensity:** How effectively do the participants convey emotions to strengthen their position?
+  3. **Persuasiveness:** How persuasive are the arguments in convincing the other party or an external observer?
+  4. **Rebuttal Effectiveness:** How well do the participants counter the opposing points?
+  5. **Overall Impact:** What is the overall effectiveness of each participant in the argument?
+  
+  **Output Requirement:**
+  Respond strictly with a JSON object in the following format. Do not include any text outside of this JSON structure.
+  
+  **JSON Format:**
+  {
+    "scores": {
+      "Speaker 1": {
+        "Logical Consistency": number,
+        "Emotional Intensity": number,
+        "Persuasiveness": number,
+        "Rebuttal Effectiveness": number,
+        "Overall Impact": number
+      },
+      "Speaker 2": {
+        "Logical Consistency": number,
+        "Emotional Intensity": number,
+        "Persuasiveness": number,
+        "Rebuttal Effectiveness": number,
+        "Overall Impact": number
+      }
+    },
+    "justifications": {
+      "Speaker 1": "Brief justification for Speaker 1's scores.",
+      "Speaker 2": "Brief justification for Speaker 2's scores."
+    },
+    "summaries": {
+      "Speaker 1": "Summary of Speaker 1's performance.",
+      "Speaker 2": "Summary of Speaker 2's performance."
+    },
+    "winner": "Speaker 1" or "Speaker 2"
+  }
+  
+  Respond with only this JSON object. Do not include any other text.
+    
+  **Transcripts:**
+  
+  **Speaker 1:**
+  ${speaker1Transcript}
+  
+  **Speaker 2:**
+  ${speaker2Transcript}
+  `;
 
   try {
     const response = await axios.post(
