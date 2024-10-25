@@ -89,7 +89,7 @@ import {
         setOutput('Transcribing... Please wait.');
         const transcriptionResult = await pollTranscription(transcriptionId);
   
-        const { text, utterances } = transcriptionResult;
+        const { utterances } = transcriptionResult;
   
         // Process utterances to separate speakers
         const separatedTranscripts = separateSpeakers(utterances);
@@ -136,7 +136,7 @@ import {
       // Log the transcription result to understand its structure
       console.log('Transcription Result:', transcriptionResult);
   
-      const { text, utterances } = transcriptionResult;
+      const { utterances } = transcriptionResult;
   
       // Process utterances to separate speakers
       const separatedTranscripts = separateSpeakers(utterances);
