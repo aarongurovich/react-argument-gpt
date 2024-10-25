@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AudioRecorderWithTranscription = () => {
   const [output, setOutput] = useState('');
-  const [transcript, setTranscript] = useState('');
+  const [transcript, setTranscript] = useState({ speaker1: '', speaker2: '' });
   const [evaluation, setEvaluation] = useState('');
   const [error, setError] = useState(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -16,7 +16,7 @@ const AudioRecorderWithTranscription = () => {
   // Function to start recording
   const startRecording = async () => {
     audioChunksRef.current = []; // Reset audio chunks
-    setTranscript('');
+    setTranscript({ speaker1: '', speaker2: '' });
     setEvaluation('');
     setError(null);
     setOutput('');
@@ -76,13 +76,24 @@ const AudioRecorderWithTranscription = () => {
 
           // Step 3: Poll for transcription completion
           setOutput('Transcribing... Please wait.');
-          const transcriptionText = await pollTranscription(transcriptionId);
+          const transcriptionResult = await pollTranscription(transcriptionId);
 
-          setTranscript(transcriptionText);
+          const { text, speaker_labels } = transcriptionResult;
+
+          // Debugging: Inspect speaker_labels
+          console.log('Speaker Labels:', speaker_labels);
+
+          // Step 4: Process speaker labels to separate transcripts
+          const separatedTranscripts = separateSpeakers(text, speaker_labels);
+
+          setTranscript(separatedTranscripts);
           setOutput('Transcription completed! Now evaluating...');
-          
-          // Step 4: Evaluate transcription with OpenAI
-          const evaluationResult = await evaluateTranscription(transcriptionText);
+
+          // Step 5: Evaluate transcription with OpenAI using separated transcripts
+          const evaluationResult = await evaluateTranscription(
+            separatedTranscripts.speaker1,
+            separatedTranscripts.speaker2
+          );
           setEvaluation(evaluationResult);
           setOutput('Evaluation completed!');
         } catch (transcriptionError) {
@@ -91,7 +102,7 @@ const AudioRecorderWithTranscription = () => {
           setOutput('');
         } finally {
           // Stop all media tracks to release the microphone
-          mediaStreamRef.current.getTracks().forEach(track => track.stop());
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
           setIsTranscribing(false);
         }
       };
@@ -144,16 +155,21 @@ const AudioRecorderWithTranscription = () => {
     }
 
     try {
-      const response = await axios.post('https://api.assemblyai.com/v2/transcript', {
-        audio_url: audioUrl,
-        speaker_labels: true, // Optional: Enable speaker labeling
-        // Add other transcription options here
-      }, {
-        headers: {
-          authorization: apiKey,
-          'content-type': 'application/json',
+      const response = await axios.post(
+        'https://api.assemblyai.com/v2/transcript',
+        {
+          audio_url: audioUrl,
+          speaker_labels: true, // Enable speaker labeling
+          format_text: true,    // Optional: Format text for better readability
+          // Add other transcription options here
         },
-      });
+        {
+          headers: {
+            authorization: apiKey,
+            'content-type': 'application/json',
+          },
+        }
+      );
       return response.data.id;
     } catch (transcriptionError) {
       console.error('Transcription Request Error:', transcriptionError);
@@ -177,13 +193,17 @@ const AudioRecorderWithTranscription = () => {
         const status = response.data.status;
 
         if (status === 'completed') {
-          return response.data.text;
+          console.log('Transcription Completed:', response.data); // Log entire response
+          return {
+            text: response.data.text,
+            speaker_labels: response.data.speaker_labels, // Should be an array
+          };
         } else if (status === 'error') {
           throw new Error(response.data.error);
         }
 
         // Wait for 3 seconds before polling again
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       } catch (pollError) {
         console.error('Polling Error:', pollError);
         throw new Error('Failed during transcription polling.');
@@ -192,69 +212,141 @@ const AudioRecorderWithTranscription = () => {
   };
 
   // Function to evaluate transcription with OpenAI
-  const evaluateTranscription = async (transcriptionText) => {
+  const evaluateTranscription = async (speaker1Transcript, speaker2Transcript) => {
     const openAIApiKey = process.env.REACT_APP_OPENAI_API_KEY;
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key is not set. Please check your environment variables.');
     }
 
-    try {
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: "gpt-4", // Ensure the model name is correct
-        messages: [
-          { 
-            role: "system", 
-            content: "You are the impartial judge of a debate between two participants. Your task is to declare the winner based on specific categories. The categories are: (1) Argument strength, (2) Clarity of communication, (3) Use of evidence/examples, (4) Rebuttal effectiveness, and (5) Overall persuasiveness. Assign a score from 1 to 10 for each participant in each category, then declare the winner based on their overall performance. Please remain unbiased and judge solely on the skills displayed in each category." 
-          },
-          {
-            role: "user",
-            content: transcriptionText,
-          },
-        ],
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openAIApiKey}`,
-        },
-      });
+    const prompt = `
+You are an impartial judge evaluating an argument between two participants: Speaker 1 and Speaker 2. Based on their statements, please determine the winner of the argument.
 
-      const object1 = response.data.choices[0].message;
-      let answer = object1.content;
-      return answer;
+**Evaluation Criteria:**
+1. **Logical Consistency:** How logical and coherent are the arguments presented?
+2. **Emotional Intensity:** How effectively do the participants convey emotions to strengthen their position?
+3. **Persuasiveness:** How persuasive are the arguments in convincing the other party or an external observer?
+4. **Rebuttal Effectiveness:** How well do the participants counter the opposing points?
+5. **Overall Impact:** What is the overall effectiveness of each participant in the argument?
+
+**Instructions:**
+- Assign a score from 1 to 10 for each participant in each category.
+- Provide a brief justification for each score.
+- Summarize the overall performance of each speaker.
+- Declare the winner based on the aggregated scores.
+
+**Transcripts:**
+
+**Speaker 1:**
+${speaker1Transcript}
+
+**Speaker 2:**
+${speaker2Transcript}
+
+**Evaluation:**
+`;
+
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are ChatGPT, a large language model trained by OpenAI.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7, // Adjust temperature for creativity vs. determinism
+          max_tokens: 1000, // Adjust as needed
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openAIApiKey}`,
+          },
+        }
+      );
+
+      const evaluation = response.data.choices[0].message.content.trim();
+      return evaluation;
     } catch (openAIError) {
       console.error('OpenAI Error:', openAIError);
       throw new Error('Failed to evaluate transcription with OpenAI.');
     }
   };
 
+  // Function to separate transcript based on speaker labels
+  const separateSpeakers = (text, speakerLabels) => {
+    if (!speakerLabels) {
+      console.warn('Speaker labels are missing. Returning full transcript as Speaker 1.');
+      return { speaker1: text, speaker2: '' };
+    }
+
+    if (typeof speakerLabels === 'boolean') {
+      console.warn('Speaker labels are a boolean. Expected an array. Returning full transcript as Speaker 1.');
+      return { speaker1: text, speaker2: '' };
+    }
+
+    if (!Array.isArray(speakerLabels)) {
+      console.error('Speaker labels are not in expected array format:', speakerLabels);
+      return { speaker1: text, speaker2: '' };
+    }
+
+    let speaker1 = '';
+    let speaker2 = '';
+    let currentSpeaker = null;
+
+    speakerLabels.forEach((label) => {
+      const { speaker, text: spokenText } = label;
+
+      if (speaker === 0) {
+        speaker1 += spokenText + ' ';
+      } else if (speaker === 1) {
+        speaker2 += spokenText + ' ';
+      }
+      // Extend this if more than two speakers are possible
+    });
+
+    return {
+      speaker1: speaker1.trim(),
+      speaker2: speaker2.trim(),
+    };
+  };
+
   return (
     <div style={styles.container}>
       <h2>Audio Recorder with Transcription and Evaluation</h2>
       <div style={styles.buttonContainer}>
-        <button onClick={startRecording} style={styles.button} disabled={isRecording || isTranscribing}>
+        <button
+          onClick={startRecording}
+          style={styles.button}
+          disabled={isRecording || isTranscribing}
+        >
           {isRecording ? 'Recording...' : 'Start Recording'}
         </button>
-        <button
-          onClick={stopRecording}
-          style={styles.button}
-          disabled={!isRecording}
-        >
+        <button onClick={stopRecording} style={styles.button} disabled={!isRecording}>
           Stop Recording
         </button>
       </div>
       <div id="output" style={styles.output}>
         {output}
       </div>
-      {isTranscribing && (
-        <div style={styles.transcribing}>
-          Transcription in progress...
+      {isTranscribing && <div style={styles.transcribing}>Transcription in progress...</div>}
+      {transcript.speaker1 && (
+        <div style={styles.transcript}>
+          <h3>Speaker 1:</h3>
+          <p>{transcript.speaker1}</p>
         </div>
       )}
-      {transcript && (
+      {transcript.speaker2 && (
         <div style={styles.transcript}>
-          <h3>Transcript:</h3>
-          <p>{transcript}</p>
+          <h3>Speaker 2:</h3>
+          <p>{transcript.speaker2}</p>
         </div>
       )}
       {evaluation && (
@@ -263,11 +355,7 @@ const AudioRecorderWithTranscription = () => {
           <p>{evaluation}</p>
         </div>
       )}
-      {error && (
-        <div style={styles.error}>
-          {error}
-        </div>
-      )}
+      {error && <div style={styles.error}>{error}</div>}
     </div>
   );
 };
