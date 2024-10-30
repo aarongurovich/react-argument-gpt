@@ -33,14 +33,16 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
         "Emotional Intensity": number,
         "Persuasiveness": number,
         "Rebuttal Effectiveness": number,
-        "Overall Impact": number
+        "Overall Impact": number,
+        "Overall Score": number
       },
       "Speaker 2": {
         "Logical Consistency": number,
         "Emotional Intensity": number,
         "Persuasiveness": number,
         "Rebuttal Effectiveness": number,
-        "Overall Impact": number
+        "Overall Impact": number,
+        "Overall Score": number
       }
     },
     "justifications": {
