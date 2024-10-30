@@ -93,6 +93,7 @@ const AudioRecorderWithTranscription = () => {
   return (
     <div style={styles.container}>
       <h2 style={styles.header}>Argumate AI</h2> {/* Updated Title */}
+      <h3>“Winning Arguments, the High-Tech Way”</h3>
       
       <div style={styles.buttonContainer}>
         <button
