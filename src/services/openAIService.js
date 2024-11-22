@@ -46,12 +46,12 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
       }
     },
     "justifications": {
-      "Speaker 1": "Brief justification for Speaker 1's scores.",
-      "Speaker 2": "Brief justification for Speaker 2's scores."
+      "Speaker 1": "Provide a brief explanation for the scores assigned to Speaker 1, focusing on how well they met each evaluation criterion.",
+      "Speaker 2": "Provide a brief explanation for the scores assigned to Speaker 2, focusing on how well they met each evaluation criterion."
     },
     "summaries": {
-      "Speaker 1": "Summary of Speaker 1's performance.",
-      "Speaker 2": "Summary of Speaker 2's performance."
+      "Speaker 1": "Summarize the key points and main arguments presented by Speaker 1. (Make sure its different from justifications)",
+      "Speaker 2": "Summarize the key points and main arguments presented by Speaker 2. (Make sure its different from justifications)"
     },
     "winner": "Speaker 1" or "Speaker 2"
   }
