@@ -13,7 +13,7 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
   }
 
   const prompt = `
-  You are an impartial judge evaluating an argument between two participants: Speaker 1 and Speaker 2. Based on their statements, please determine the winner of the argument.
+  You are an impartial judge evaluating an argument between two participants: Speaker 1 and Speaker 2. Please be super critical and do not hold back on your analysis (Do not worry no one will be offended). Based on their statements, please determine the winner of the argument.
   
   **Evaluation Criteria:**
   1. **Logical Consistency:** How logical and coherent are the arguments presented?
