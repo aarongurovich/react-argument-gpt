@@ -14,11 +14,11 @@ const AudioRecorderWithTranscription = () => {
   const audioRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const hiddenFileInputRef = useRef(null); // Reference to the hidden file input
+  const hiddenFileInputRef = useRef(null);
 
   const handleStartRecording = async () => {
     console.log('Start Recording Clicked');
-    setError(null); // Clear any existing errors
+    setError(null);
     setOutput('Recording started...');
     setIsRecording(true);
     try {
@@ -60,17 +60,17 @@ const AudioRecorderWithTranscription = () => {
 
   const handleFileUploadClick = () => {
     console.log('Choose File Clicked');
-    hiddenFileInputRef.current.click(); // Trigger the hidden file input
+    hiddenFileInputRef.current.click();
   };
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       console.log('File selected:', file.name);
-      setSelectedFileName(file.name); // Update the selected file name
+      setSelectedFileName(file.name);
       setOutput('Processing uploaded audio file...');
       setIsTranscribing(true);
-      setError(null); // Clear any existing errors
+      setError(null);
       try {
         await processAudioFile(
           file,
@@ -90,131 +90,205 @@ const AudioRecorderWithTranscription = () => {
     }
   };
 
+  const getButtonStyle = (baseStyle, hoverStyle, disabled = false) => {
+    if (disabled) {
+      return { ...styles.button, ...baseStyle, ...styles.disabledButton };
+    }
+    return { ...styles.button, ...baseStyle };
+  };
+
+  const renderScoreItem = (label, value) => (
+    <div style={styles.scoreItem}>
+      <span style={styles.scoreLabel}>{label}</span>
+      <span style={styles.scoreValue}>{value}</span>
+    </div>
+  );
+
   return (
     <div style={styles.container}>
-      <h2 style={styles.header}>Argumate AI</h2> {/* Updated Title */}
-      <h3>“Winning Arguments, the High-Tech Way”</h3>
-      
-      <div style={styles.buttonContainer}>
-        <button
-          onClick={handleStartRecording}
-          style={styles.button}
-          disabled={isRecording || isTranscribing}
-        >
-          🎤 Start Recording
-        </button>
-        <button
-          onClick={handleStopRecording}
-          style={styles.button}
-          disabled={!isRecording}
-        >
-          🛑 Stop Recording
-        </button>
-      </div>
+      <div style={styles.backgroundPattern}></div>
+      <div style={styles.mainCard}>
+        <div style={styles.cardGlow}></div>
+        <h1 style={styles.header}>Argumate AI</h1>
+        <p style={styles.subtitle}>AI-Powered Debate Analysis</p>
+        
+        <div style={styles.controlsSection}>
+          <div style={styles.recordingControls}>
+            <button
+              onClick={handleStartRecording}
+              style={getButtonStyle(styles.primaryButton, styles.primaryButtonHover, isRecording || isTranscribing)}
+              disabled={isRecording || isTranscribing}
+              onMouseEnter={(e) => {
+                if (!isRecording && !isTranscribing) {
+                  Object.assign(e.target.style, styles.primaryButtonHover);
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isRecording && !isTranscribing) {
+                  Object.assign(e.target.style, getButtonStyle(styles.primaryButton));
+                }
+              }}
+            >
+              <span style={styles.buttonIcon}>🎤</span>
+              Start Recording
+            </button>
+            
+            <button
+              onClick={handleStopRecording}
+              style={getButtonStyle(styles.secondaryButton, styles.secondaryButtonHover, !isRecording)}
+              disabled={!isRecording}
+              onMouseEnter={(e) => {
+                if (isRecording) {
+                  Object.assign(e.target.style, styles.secondaryButtonHover);
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isRecording) {
+                  Object.assign(e.target.style, getButtonStyle(styles.secondaryButton));
+                }
+              }}
+            >
+              <span style={styles.buttonIcon}>⏹️</span>
+              Stop Recording
+            </button>
+          </div>
 
-      <div style={styles.fileInputContainer}>
-        {/* Hidden File Input */}
-        <input
-          type="file"
-          accept="audio/*"
-          ref={hiddenFileInputRef}
-          style={styles.hiddenFileInput}
-          onChange={handleFileUpload}
-        />
-        {/* Custom File Input Button */}
-        <button
-          onClick={handleFileUploadClick}
-          style={styles.fileInputButton}
-        >
-          📁 Choose File
-        </button>
-        {/* Display Selected File Name */}
-        {selectedFileName && (
-          <div style={styles.fileInputLabel}>
-            {selectedFileName}
+          <div style={selectedFileName ? { ...styles.fileUploadSection, ...styles.fileUploadSectionActive } : styles.fileUploadSection}>
+            <input
+              type="file"
+              accept="audio/*"
+              ref={hiddenFileInputRef}
+              style={styles.hiddenFileInput}
+              onChange={handleFileUpload}
+            />
+            
+            <button
+              onClick={handleFileUploadClick}
+              style={getButtonStyle(styles.tertiaryButton, styles.tertiaryButtonHover, isTranscribing)}
+              disabled={isTranscribing}
+              onMouseEnter={(e) => {
+                if (!isTranscribing) {
+                  Object.assign(e.target.style, styles.tertiaryButtonHover);
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isTranscribing) {
+                  Object.assign(e.target.style, getButtonStyle(styles.tertiaryButton));
+                }
+              }}
+            >
+              <span style={styles.buttonIcon}>📁</span>
+              Choose Audio File
+            </button>
+            
+            {selectedFileName && (
+              <div style={styles.fileLabel}>
+                <span>📄</span>
+                {selectedFileName}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {(output || isTranscribing) && (
+          <div style={styles.statusCard}>
+            {isTranscribing ? (
+              <div style={styles.loadingIndicator}>
+                <div style={styles.spinner}></div>
+                <span>Processing audio and analyzing arguments...</span>
+              </div>
+            ) : (
+              <p style={styles.statusText}>{output}</p>
+            )}
+          </div>
+        )}
+
+        {(transcript.speaker1 || transcript.speaker2) && (
+          <div style={styles.transcriptSection}>
+            {transcript.speaker1 && (
+              <div style={styles.transcriptCard}>
+                <div style={styles.transcriptCardGlow}></div>
+                <h3 style={styles.transcriptHeader}>
+                  <span>👤</span>
+                  Speaker 1
+                </h3>
+                <p style={styles.transcriptText}>{transcript.speaker1}</p>
+              </div>
+            )}
+            
+            {transcript.speaker2 && (
+              <div style={styles.transcriptCard}>
+                <div style={styles.transcriptCardGlow}></div>
+                <h3 style={styles.transcriptHeader}>
+                  <span>👥</span>
+                  Speaker 2
+                </h3>
+                <p style={styles.transcriptText}>{transcript.speaker2}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {evaluation && evaluation.scores && evaluation.scores['Speaker 1'] && evaluation.scores['Speaker 2'] && (
+          <div style={styles.evaluationSection}>
+            <div style={styles.evaluationGlow}></div>
+            <h2 style={styles.evaluationHeader}>🔥 The Roast Report</h2>
+            
+            <div style={styles.scoresGrid}>
+              {['Speaker 1', 'Speaker 2'].map((speaker) => (
+                <div key={speaker} style={styles.speakerCard}>
+                  <h4 style={styles.speakerHeader}>
+                    <span>{speaker === 'Speaker 1' ? '👤' : '👥'}</span>
+                    {speaker}
+                  </h4>
+                  <div style={styles.scoresList}>
+                    {Object.entries(evaluation.scores[speaker])
+                      .filter(([key]) => key !== 'Overall Score')
+                      .map(([criteria, score]) => renderScoreItem(criteria, score))}
+                    {renderScoreItem('Overall Score', evaluation.scores[speaker]['Overall Score'])}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={styles.summarySection}>
+              {['Speaker 1', 'Speaker 2'].map((speaker) => (
+                <div key={speaker} style={styles.summaryCard}>
+                  <h4 style={styles.speakerHeader}>
+                    <span>{speaker === 'Speaker 1' ? '📝' : '📋'}</span>
+                    {speaker} Analysis
+                  </h4>
+                  <p style={styles.summaryText}>
+                    <strong>Summary:</strong> {evaluation.summaries[speaker]}
+                  </p>
+                  <br />
+                  <p style={styles.summaryText}>
+                    <strong>Justification:</strong> {evaluation.justifications[speaker]}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div style={styles.winnerBanner}>
+              <div style={styles.winnerBannerGlow}></div>
+              <h3 style={styles.winnerText}>
+                <span>🏆</span>
+                Winner: {evaluation.winner}
+                <span>🎉</span>
+              </h3>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div style={styles.errorCard}>
+            <p style={styles.errorText}>
+              <span>⚠️</span>
+              {error}
+            </p>
           </div>
         )}
       </div>
-
-      <div id="output" style={styles.output}>
-        {output}
-      </div>
-      
-      {isTranscribing && (
-        <div style={styles.transcribing}>🕒 Transcription in progress...</div>
-      )}
-
-      {transcript.speaker1 && (
-        <div style={styles.transcript}>
-          <h3 style={styles.transcriptHeader}>Speaker 1:</h3>
-          <p>{transcript.speaker1}</p>
-        </div>
-      )}
-      {transcript.speaker2 && (
-        <div style={styles.transcript}>
-          <h3 style={styles.transcriptHeader}>Speaker 2:</h3>
-          <p>{transcript.speaker2}</p>
-        </div>
-      )}
-
-      {evaluation && evaluation.scores && evaluation.scores['Speaker 1'] && evaluation.scores['Speaker 2'] ? (
-        <div style={styles.evaluation}>
-          <h3 style={styles.evaluationHeader}>Evaluation:</h3>
-          <div style={styles.evaluationSection}>
-            <h2>Scores:</h2>
-            {['Speaker 1', 'Speaker 2'].map((speaker) => (
-              <div key={speaker} style={styles.speakerSection}>
-                <h5 style={styles.speakerHeader}>{speaker}:</h5>
-                <ul>
-                  {Object.entries(evaluation.scores[speaker]).map(
-                    ([criteria, score]) => (
-                      <li key={criteria}>
-                        <strong>{criteria}:</strong> {score}
-                      </li>
-                    )
-                  )}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div style={styles.evaluationSection}>
-            <h2>Justifications:</h2>
-            {['Speaker 1', 'Speaker 2'].map((speaker) => (
-              <div key={speaker} style={styles.speakerSection}>
-                <h5 style={styles.speakerHeader}>{speaker}:</h5>
-                <p>{evaluation.justifications[speaker]}</p>
-              </div>
-            ))}
-          </div>
-          <div style={styles.evaluationSection}>
-            <h2>Summaries:</h2>
-            {['Speaker 1', 'Speaker 2'].map((speaker) => (
-              <div key={speaker} style={styles.speakerSection}>
-                <h5 style={styles.speakerHeader}>{speaker}:</h5>
-                <p>{evaluation.summaries[speaker]}</p>
-              </div>
-            ))}
-          </div>
-          <div style={styles.evaluationSection}>
-            <h2>Overall Scores:</h2>
-            {['Speaker 1', 'Speaker 2'].map((speaker) => (
-              <div key={speaker} style={styles.speakerSection}>
-                <h5 style={styles.speakerHeader}>{speaker}:</h5>
-                <p><strong>Overall Score:</strong> {evaluation.scores[speaker]['Overall Score']}</p>
-              </div>
-            ))}
-          </div>
-          <div style={styles.winnerSection}>
-            🏆 <strong>Winner:</strong> {evaluation.winner}
-          </div>
-        </div>
-      ) : (
-        evaluation && (
-          <div style={styles.error}>❗ Evaluation data is incomplete or missing.</div>
-        )
-      )}
-
-      {error && <div style={styles.error}>❌ {error}</div>}
     </div>
   );
 };

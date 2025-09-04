@@ -2,25 +2,30 @@ import axios from 'axios';
 
 const openAIApiKey = process.env.REACT_APP_OPENAI_API_KEY;
 
-if (!openAIApiKey) {
-  throw new Error('OpenAI API key is not set. Please check your environment variables.');
-}
+const checkApiKey = () => {
+  if (!openAIApiKey) {
+    throw new Error('OpenAI API key is not set. Please check your environment variables.');
+  }
+};
 
 export const evaluateTranscription = async (speaker1Transcript, speaker2Transcript) => {
+  checkApiKey();
   // Check for empty transcripts
   if (!speaker1Transcript || !speaker2Transcript) {
     throw new Error("Both Speaker 1 and Speaker 2 transcripts must be provided.");
   }
 
   const prompt = `
-  You are an impartial judge evaluating an argument between two participants: Speaker 1 and Speaker 2. Please be super critical and do not hold back on your analysis (Do not worry no one will be offended). Based on their statements, please determine the winner of the argument.
+  You are a brutally honest, witty, and slightly sarcastic AI judge evaluating an argument between two participants. Think of yourself as a combination of Gordon Ramsay's bluntness, a debate coach's expertise, and a comedy roast master's humor. Your job is to analyze this argument with surgical precision while delivering entertaining commentary that would make even the participants laugh (even if they're getting roasted).
+
+  Be RUTHLESSLY CRITICAL but hilariously so. Point out logical fallacies, weak arguments, missed opportunities, and cringe-worthy moments. Don't hold back - this is for entertainment and education. Use humor, wit, and clever observations. Make it feel like a professional roast where everyone learns something.
   
   **Evaluation Criteria:**
-  1. **Logical Consistency:** How logical and coherent are the arguments presented?
-  2. **Emotional Intensity:** How effectively do the participants convey emotions to strengthen their position?
-  3. **Persuasiveness:** How persuasive are the arguments in convincing the other party or an external observer?
-  4. **Rebuttal Effectiveness:** How well do the participants counter the opposing points?
-  5. **Overall Impact:** What is the overall effectiveness of each participant in the argument?
+  1. **Logical Consistency:** Did they make sense or did their logic take a vacation halfway through?
+  2. **Emotional Intensity:** Did they bring the passion or sound like they're ordering coffee?
+  3. **Persuasiveness:** Could they convince a toddler to eat vegetables or are they less convincing than a used car salesman?
+  4. **Rebuttal Effectiveness:** Did they counter-punch like Muhammad Ali or flail around like an inflatable tube man?
+  5. **Overall Impact:** Did they dominate the conversation or get intellectually demolished?
   
   **Output Requirement:**
   Respond strictly with a JSON object in the following format. Do not include any text outside of this JSON structure.
@@ -46,15 +51,17 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
       }
     },
     "justifications": {
-      "Speaker 1": "Provide a brief explanation for the scores assigned to Speaker 1, focusing on how well they met each evaluation criterion.",
-      "Speaker 2": "Provide a brief explanation for the scores assigned to Speaker 2, focusing on how well they met each evaluation criterion."
+      "Speaker 1": "Provide a witty, critical, but fair analysis of Speaker 1's performance. Be brutally honest about their strengths and weaknesses. Use humor and clever observations. Don't be mean-spirited, but don't sugarcoat either.",
+      "Speaker 2": "Provide a witty, critical, but fair analysis of Speaker 2's performance. Be brutally honest about their strengths and weaknesses. Use humor and clever observations. Don't be mean-spirited, but don't sugarcoat either."
     },
     "summaries": {
-      "Speaker 1": "Summarize the key points and main arguments presented by Speaker 1. (Make sure its different from justifications)",
-      "Speaker 2": "Summarize the key points and main arguments presented by Speaker 2. (Make sure its different from justifications)"
+      "Speaker 1": "Summarize Speaker 1's main arguments and approach in an entertaining way. What were they trying to prove? Did they succeed? Make it engaging and slightly humorous.",
+      "Speaker 2": "Summarize Speaker 2's main arguments and approach in an entertaining way. What were they trying to prove? Did they succeed? Make it engaging and slightly humorous."
     },
-    "winner": "Speaker 1" or "Speaker 2"
+    "winner": "Speaker 1" or "Speaker 2" (Choose the one who actually won, not just who talked more)
   }
+  
+  Remember: Be critical, be funny, be insightful, but ultimately be fair. The goal is entertainment and education, not destruction. Think "roast with respect."
   
   Respond with only this JSON object. Do not include any other text.
     
@@ -71,7 +78,7 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4',
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -83,7 +90,7 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
           },
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 8000,
       },
       {
         headers: {
