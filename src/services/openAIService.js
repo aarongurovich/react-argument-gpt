@@ -1,76 +1,87 @@
 import axios from 'axios';
 
+// It's recommended to retrieve the API key from server-side environment variables in a real application
+// For this client-side example, we'll continue using process.env
 const openAIApiKey = process.env.REACT_APP_OPENAI_API_KEY;
 
 const checkApiKey = () => {
   if (!openAIApiKey) {
-    throw new Error('OpenAI API key is not set. Please check your environment variables.');
+    throw new Error('OpenAI API key is not set. Please check your .env file.');
   }
 };
 
 export const evaluateTranscription = async (speaker1Transcript, speaker2Transcript) => {
   checkApiKey();
-  // Check for empty transcripts
   if (!speaker1Transcript || !speaker2Transcript) {
-    throw new Error("Both Speaker 1 and Speaker 2 transcripts must be provided.");
+    throw new Error("Both Speaker 1 and Speaker 2 transcripts must be provided for a comprehensive analysis.");
   }
 
-  const prompt = `
-  You are a brutally honest, witty, and slightly sarcastic AI judge evaluating an argument between two participants. Think of yourself as a combination of Gordon Ramsay's bluntness, a debate coach's expertise, and a comedy roast master's humor. Your job is to analyze this argument with surgical precision while delivering entertaining commentary that would make even the participants laugh (even if they're getting roasted).
+  // --- NEW, MORE SERIOUS AND IN-DEPTH SYSTEM PROMPT ---
+  const systemPrompt = `You are an expert rhetorical analyst and debate adjudicator with a reputation for incisive, erudite, and objective analysis. Your task is to deconstruct the provided debate transcripts with academic rigor. Avoid colloquialisms, humor, or a conversational tone. Your output must be structured, formal, and analytical. You will identify logical fallacies, assess the quality of evidence, analyze rhetorical strategies, and provide a clear, evidence-based verdict.
 
-  Be RUTHLESSLY CRITICAL but hilariously so. Point out logical fallacies, weak arguments, missed opportunities, and cringe-worthy moments. Don't hold back - this is for entertainment and education. Use humor, wit, and clever observations. Make it feel like a professional roast where everyone learns something.
-  
-  **Evaluation Criteria:**
-  1. **Logical Consistency:** Did they make sense or did their logic take a vacation halfway through?
-  2. **Emotional Intensity:** Did they bring the passion or sound like they're ordering coffee?
-  3. **Persuasiveness:** Could they convince a toddler to eat vegetables or are they less convincing than a used car salesman?
-  4. **Rebuttal Effectiveness:** Did they counter-punch like Muhammad Ali or flail around like an inflatable tube man?
-  5. **Overall Impact:** Did they dominate the conversation or get intellectually demolished?
-  
-  **Output Requirement:**
-  Respond strictly with a JSON object in the following format. Do not include any text outside of this JSON structure.
-  
-  **JSON Format:**
-  {
-    "scores": {
-      "Speaker 1": {
-        "Logical Consistency": number,
-        "Emotional Intensity": number,
-        "Persuasiveness": number,
-        "Rebuttal Effectiveness": number,
-        "Overall Impact": number,
-        "Overall Score": number
-      },
-      "Speaker 2": {
-        "Logical Consistency": number,
-        "Emotional Intensity": number,
-        "Persuasiveness": number,
-        "Rebuttal Effectiveness": number,
-        "Overall Impact": number,
-        "Overall Score": number
-      }
+Your entire response must be a single, clean JSON object, without any introductory or concluding text.
+
+JSON format:
+{
+  "overall_assessment": "A concise, high-level summary of the debate's dynamics, core tensions, and overall quality.",
+  "performance_scores": {
+    "Speaker 1": {
+      "Argumentation_and_Logic": "number // Score from 1-10 on logical consistency, coherence, and avoidance of fallacies.",
+      "Evidence_and_Support": "number // Score from 1-10 on the quality, relevance, and application of evidence.",
+      "Rhetorical_Effectiveness": "number // Score from 1-10 on the use of persuasive language, ethos, pathos, and logos.",
+      "Clarity_and_Structure": "number // Score from 1-10 on the organization and clarity of the arguments.",
+      "Rebuttal_and_Clash": "number // Score from 1-10 on the effectiveness of responses to the opponent.",
+      "Total": "number // Sum of all scores."
     },
-    "justifications": {
-      "Speaker 1": "Provide a witty, critical, but fair analysis of Speaker 1's performance. Be brutally honest about their strengths and weaknesses. Use humor and clever observations. Don't be mean-spirited, but don't sugarcoat either.",
-      "Speaker 2": "Provide a witty, critical, but fair analysis of Speaker 2's performance. Be brutally honest about their strengths and weaknesses. Use humor and clever observations. Don't be mean-spirited, but don't sugarcoat either."
+    "Speaker 2": {
+      "Argumentation_and_Logic": "number",
+      "Evidence_and_Support": "number",
+      "Rhetorical_Effectiveness": "number",
+      "Clarity_and_Structure": "number",
+      "Rebuttal_and_Clash": "number",
+      "Total": "number"
+    }
+  },
+  "detailed_analysis": {
+    "Speaker 1": {
+      "strengths": [
+        "A bulleted list of key strengths, citing specific examples from the transcript."
+      ],
+      "weaknesses": [
+        "A bulleted list of key weaknesses, citing specific examples."
+      ],
+      "logical_fallacies": [
+        {
+          "fallacy": "Name of the logical fallacy (e.g., 'Ad Hominem', 'Straw Man').",
+          "quote": "The exact quote from the transcript where the fallacy occurred.",
+          "explanation": "A brief explanation of why this constitutes the fallacy."
+        }
+      ],
+      "pivotal_moments": [
+        "A list of moments or arguments that significantly impacted their performance, for better or worse."
+      ]
     },
-    "summaries": {
-      "Speaker 1": "Summarize Speaker 1's main arguments and approach in an entertaining way. What were they trying to prove? Did they succeed? Make it engaging and slightly humorous.",
-      "Speaker 2": "Summarize Speaker 2's main arguments and approach in an entertaining way. What were they trying to prove? Did they succeed? Make it engaging and slightly humorous."
-    },
-    "winner": "Speaker 1" or "Speaker 2" (Choose the one who actually won, not just who talked more)
+    "Speaker 2": {
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "logical_fallacies": [{ "fallacy": "...", "quote": "...", "explanation": "..." }],
+      "pivotal_moments": ["..."]
+    }
+  },
+  "strategic_recommendations": {
+    "speaker_1": "A concise, actionable recommendation for Speaker 1 to improve their debating skills.",
+    "speaker_2": "A concise, actionable recommendation for Speaker 2."
+  },
+  "verdict_and_rationale": {
+    "winner": "'Speaker 1' or 'Speaker 2'",
+    "rationale": "A detailed paragraph explaining the final verdict, synthesizing the key findings from the detailed analysis and performance scores. This should clearly state the deciding factors that led to the win."
   }
+}`;
   
-  Remember: Be critical, be funny, be insightful, but ultimately be fair. The goal is entertainment and education, not destruction. Think "roast with respect."
-  
-  Respond with only this JSON object. Do not include any other text.
-    
-  **Transcripts:**
-  
-  **Speaker 1:**
+  const userPrompt = `**Speaker 1 Transcript:**
   ${speaker1Transcript}
   
-  **Speaker 2:**
+  **Speaker 2 Transcript:**
   ${speaker2Transcript}
   `;
 
@@ -78,44 +89,28 @@ export const evaluateTranscription = async (speaker1Transcript, speaker2Transcri
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o', // Upgraded to the latest, most capable model
         messages: [
-          {
-            role: 'system',
-            content: 'You are ChatGPT, a large language model trained by OpenAI.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
-        max_tokens: 8000,
+        response_format: { type: "json_object" },
+        temperature: 0.4, // Lowered for more deterministic, analytical output
+        max_tokens: 4000, // Increased to accommodate the more verbose, detailed structure
       },
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${openAIApiKey}`,
+          'Authorization': `Bearer ${openAIApiKey}`,
         },
       }
     );
 
-    const evaluationText = response.data.choices[0].message.content.trim();
+    const evaluationText = response.data.choices[0].message.content;
+    return JSON.parse(evaluationText);
 
-    // Attempt to parse JSON response
-    let evaluation;
-    try {
-      evaluation = JSON.parse(evaluationText);
-    } catch (jsonError) {
-      console.error('JSON Parsing Error:', jsonError, '\nResponse received:', evaluationText);
-
-      // Fallback: If response isn’t JSON, treat as a string error message
-      throw new Error('Failed to parse evaluation JSON from OpenAI response. Response received was:\n' + evaluationText);
-    }
-
-    return evaluation;
-  } catch (openAIError) {
-    console.error('OpenAI Error:', openAIError);
-    throw new Error('Failed to evaluate transcription with OpenAI.');
+  } catch (error) {
+    console.error('Error calling OpenAI API:', error.response ? error.response.data : error.message);
+    throw new Error('Failed to retrieve an analytical response from the AI model.');
   }
 };

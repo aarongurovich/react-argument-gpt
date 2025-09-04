@@ -490,6 +490,7 @@ const styles = {
     summarySection: {
       gridTemplateColumns: '1fr',
     },
+    
   },
 
   '@media (max-width: 480px)': {
@@ -501,6 +502,10 @@ const styles = {
     },
     controlsSection: {
       gap: '2rem',
+    },
+    loadingIndicator: {
+      flexDirection: 'column', // Stacks the spinner on top of the text
+      textAlign: 'center',
     },
     fileUploadSection: {
       padding: '2rem',

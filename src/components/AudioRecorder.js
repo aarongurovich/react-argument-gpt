@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { startRecording, stopRecording, processAudioFile } from '../utils/AudioUtils';
-import styles from '../styles/styles';
+import styles from '../styles/styles'; // Assuming styles are adapted for this new layout
 
 const AudioRecorderWithTranscription = () => {
   const [output, setOutput] = useState('');
@@ -16,90 +16,62 @@ const AudioRecorderWithTranscription = () => {
   const audioChunksRef = useRef([]);
   const hiddenFileInputRef = useRef(null);
 
-  const handleStartRecording = async () => {
-    console.log('Start Recording Clicked');
+  const clearState = () => {
+    setOutput('');
+    setTranscript({ speaker1: '', speaker2: '' });
+    setEvaluation(null);
     setError(null);
+    setSelectedFileName('');
+  };
+
+  const handleStartRecording = async () => {
+    clearState();
     setOutput('Recording started...');
     setIsRecording(true);
     try {
-      await startRecording(
-        audioRecorderRef,
-        mediaStreamRef,
-        audioChunksRef,
-        setOutput,
-        setIsRecording,
-        setError
-      );
+      await startRecording(audioRecorderRef, mediaStreamRef, audioChunksRef, setOutput, setIsRecording, setError);
     } catch (err) {
-      console.error('Error during recording:', err);
       setError('Failed to start recording.');
       setIsRecording(false);
     }
   };
 
   const handleStopRecording = async () => {
-    console.log('Stop Recording Clicked');
     try {
-      await stopRecording(
-        audioRecorderRef,
-        mediaStreamRef,
-        audioChunksRef,
-        setOutput,
-        setIsRecording,
-        setIsTranscribing,
-        setTranscript,
-        setEvaluation,
-        setError
-      );
-      console.log('Recording stopped');
+      await stopRecording(audioRecorderRef, mediaStreamRef, audioChunksRef, setOutput, setIsRecording, setIsTranscribing, setTranscript, setEvaluation, setError);
     } catch (err) {
-      console.error('Error during stopping recording:', err);
       setError('Failed to stop recording.');
     }
   };
 
   const handleFileUploadClick = () => {
-    console.log('Choose File Clicked');
     hiddenFileInputRef.current.click();
   };
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log('File selected:', file.name);
+      clearState();
       setSelectedFileName(file.name);
       setOutput('Processing uploaded audio file...');
       setIsTranscribing(true);
-      setError(null);
       try {
-        await processAudioFile(
-          file,
-          setOutput,
-          setTranscript,
-          setEvaluation,
-          setError
-        );
-        console.log('File processed successfully');
-      } catch (error) {
-        console.error('Error processing audio file:', error);
-        setError(`Error processing audio file: ${error.message}`);
+        await processAudioFile(file, setOutput, setTranscript, setEvaluation, setError);
+      } catch (err) {
+        setError(`Error processing audio file: ${err.message}`);
       } finally {
         setIsTranscribing(false);
-        console.log('Transcribing state set to false');
       }
     }
   };
 
   const getButtonStyle = (baseStyle, hoverStyle, disabled = false) => {
-    if (disabled) {
-      return { ...styles.button, ...baseStyle, ...styles.disabledButton };
-    }
-    return { ...styles.button, ...baseStyle };
+    return disabled ? { ...styles.button, ...baseStyle, ...styles.disabledButton } : { ...styles.button, ...baseStyle };
   };
 
   const renderScoreItem = (label, value) => (
-    <div style={styles.scoreItem}>
-      <span style={styles.scoreLabel}>{label}</span>
+    <div key={label} style={styles.scoreItem}>
+      <span style={styles.scoreLabel}>{label.replace(/_/g, ' ')}</span>
       <span style={styles.scoreValue}>{value}</span>
     </div>
   );
@@ -112,182 +84,122 @@ const AudioRecorderWithTranscription = () => {
         <h1 style={styles.header}>Argumate AI</h1>
         <p style={styles.subtitle}>AI-Powered Debate Analysis</p>
         
+        {/* --- Controls Section (Unchanged) --- */}
         <div style={styles.controlsSection}>
           <div style={styles.recordingControls}>
-            <button
-              onClick={handleStartRecording}
-              style={getButtonStyle(styles.primaryButton, styles.primaryButtonHover, isRecording || isTranscribing)}
-              disabled={isRecording || isTranscribing}
-              onMouseEnter={(e) => {
-                if (!isRecording && !isTranscribing) {
-                  Object.assign(e.target.style, styles.primaryButtonHover);
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isRecording && !isTranscribing) {
-                  Object.assign(e.target.style, getButtonStyle(styles.primaryButton));
-                }
-              }}
-            >
-              <span style={styles.buttonIcon}>🎤</span>
-              Start Recording
+             <button onClick={handleStartRecording} disabled={isRecording || isTranscribing} style={getButtonStyle(styles.primaryButton, styles.primaryButtonHover, isRecording || isTranscribing)}>
+                <span style={styles.buttonIcon}>🎤</span> Start Recording
             </button>
-            
-            <button
-              onClick={handleStopRecording}
-              style={getButtonStyle(styles.secondaryButton, styles.secondaryButtonHover, !isRecording)}
-              disabled={!isRecording}
-              onMouseEnter={(e) => {
-                if (isRecording) {
-                  Object.assign(e.target.style, styles.secondaryButtonHover);
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isRecording) {
-                  Object.assign(e.target.style, getButtonStyle(styles.secondaryButton));
-                }
-              }}
-            >
-              <span style={styles.buttonIcon}>⏹️</span>
-              Stop Recording
+            <button onClick={handleStopRecording} disabled={!isRecording} style={getButtonStyle(styles.secondaryButton, styles.secondaryButtonHover, !isRecording)}>
+                <span style={styles.buttonIcon}>⏹️</span> Stop Recording
             </button>
           </div>
-
           <div style={selectedFileName ? { ...styles.fileUploadSection, ...styles.fileUploadSectionActive } : styles.fileUploadSection}>
-            <input
-              type="file"
-              accept="audio/*"
-              ref={hiddenFileInputRef}
-              style={styles.hiddenFileInput}
-              onChange={handleFileUpload}
-            />
-            
-            <button
-              onClick={handleFileUploadClick}
-              style={getButtonStyle(styles.tertiaryButton, styles.tertiaryButtonHover, isTranscribing)}
-              disabled={isTranscribing}
-              onMouseEnter={(e) => {
-                if (!isTranscribing) {
-                  Object.assign(e.target.style, styles.tertiaryButtonHover);
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isTranscribing) {
-                  Object.assign(e.target.style, getButtonStyle(styles.tertiaryButton));
-                }
-              }}
-            >
-              <span style={styles.buttonIcon}>📁</span>
-              Choose Audio File
+            <input type="file" accept="audio/*" ref={hiddenFileInputRef} style={styles.hiddenFileInput} onChange={handleFileUpload} />
+            <button onClick={handleFileUploadClick} disabled={isTranscribing} style={getButtonStyle(styles.tertiaryButton, styles.tertiaryButtonHover, isTranscribing)}>
+                <span style={styles.buttonIcon}>📁</span> Choose Audio File
             </button>
-            
-            {selectedFileName && (
-              <div style={styles.fileLabel}>
-                <span>📄</span>
-                {selectedFileName}
-              </div>
-            )}
+            {selectedFileName && <div style={styles.fileLabel}><span>📄</span>{selectedFileName}</div>}
           </div>
         </div>
 
+        {/* --- Status & Transcript Sections (Unchanged) --- */}
         {(output || isTranscribing) && (
           <div style={styles.statusCard}>
             {isTranscribing ? (
-              <div style={styles.loadingIndicator}>
-                <div style={styles.spinner}></div>
-                <span>Processing audio and analyzing arguments...</span>
-              </div>
-            ) : (
-              <p style={styles.statusText}>{output}</p>
-            )}
+              <div style={styles.loadingIndicator}><div style={styles.spinner}></div><span>Processing audio and analyzing arguments...</span></div>
+            ) : (<p style={styles.statusText}>{output}</p>)}
           </div>
         )}
-
         {(transcript.speaker1 || transcript.speaker2) && (
           <div style={styles.transcriptSection}>
-            {transcript.speaker1 && (
-              <div style={styles.transcriptCard}>
-                <div style={styles.transcriptCardGlow}></div>
-                <h3 style={styles.transcriptHeader}>
-                  <span>👤</span>
-                  Speaker 1
-                </h3>
-                <p style={styles.transcriptText}>{transcript.speaker1}</p>
-              </div>
-            )}
-            
-            {transcript.speaker2 && (
-              <div style={styles.transcriptCard}>
-                <div style={styles.transcriptCardGlow}></div>
-                <h3 style={styles.transcriptHeader}>
-                  <span>👥</span>
-                  Speaker 2
-                </h3>
-                <p style={styles.transcriptText}>{transcript.speaker2}</p>
-              </div>
-            )}
+            {transcript.speaker1 && <div style={styles.transcriptCard}><div style={styles.transcriptCardGlow}></div><h3 style={styles.transcriptHeader}><span>👤</span>Speaker 1</h3><p style={styles.transcriptText}>{transcript.speaker1}</p></div>}
+            {transcript.speaker2 && <div style={styles.transcriptCard}><div style={styles.transcriptCardGlow}></div><h3 style={styles.transcriptHeader}><span>👥</span>Speaker 2</h3><p style={styles.transcriptText}>{transcript.speaker2}</p></div>}
           </div>
         )}
 
-        {evaluation && evaluation.scores && evaluation.scores['Speaker 1'] && evaluation.scores['Speaker 2'] && (
+        {/* --- ✅ NEW, SERIOUS EVALUATION SECTION --- */}
+        {evaluation && evaluation.performance_scores && (
           <div style={styles.evaluationSection}>
             <div style={styles.evaluationGlow}></div>
-            <h2 style={styles.evaluationHeader}>🔥 The Roast Report</h2>
+            <h2 style={styles.evaluationHeader}>Debate Analysis Report</h2>
+
+            {evaluation.overall_assessment && (
+              <div style={styles.subsectionCard}>
+                <h3 style={styles.speakerHeader}>Overall Assessment</h3>
+                <p style={styles.summaryText}>{evaluation.overall_assessment}</p>
+              </div>
+            )}
             
+            <h3 style={styles.sectionTitle}>Performance Metrics</h3>
             <div style={styles.scoresGrid}>
               {['Speaker 1', 'Speaker 2'].map((speaker) => (
                 <div key={speaker} style={styles.speakerCard}>
-                  <h4 style={styles.speakerHeader}>
-                    <span>{speaker === 'Speaker 1' ? '👤' : '👥'}</span>
-                    {speaker}
-                  </h4>
+                  <h4 style={styles.speakerHeader}><span>{speaker === 'Speaker 1' ? '👤' : '👥'}</span>{speaker}</h4>
                   <div style={styles.scoresList}>
-                    {Object.entries(evaluation.scores[speaker])
-                      .filter(([key]) => key !== 'Overall Score')
-                      .map(([criteria, score]) => renderScoreItem(criteria, score))}
-                    {renderScoreItem('Overall Score', evaluation.scores[speaker]['Overall Score'])}
+                    {Object.entries(evaluation.performance_scores[speaker]).map(([criteria, score]) => renderScoreItem(criteria, score))}
                   </div>
                 </div>
               ))}
             </div>
-
-            <div style={styles.summarySection}>
+            
+            <h3 style={styles.sectionTitle}>Detailed Analysis</h3>
+            <div style={styles.analysisGrid}>
               {['Speaker 1', 'Speaker 2'].map((speaker) => (
                 <div key={speaker} style={styles.summaryCard}>
-                  <h4 style={styles.speakerHeader}>
-                    <span>{speaker === 'Speaker 1' ? '📝' : '📋'}</span>
-                    {speaker} Analysis
-                  </h4>
-                  <p style={styles.summaryText}>
-                    <strong>Summary:</strong> {evaluation.summaries[speaker]}
-                  </p>
-                  <br />
-                  <p style={styles.summaryText}>
-                    <strong>Justification:</strong> {evaluation.justifications[speaker]}
-                  </p>
+                    <h4 style={styles.speakerHeader}><span>{speaker === 'Speaker 1' ? '👤' : '👥'}</span>Analysis of {speaker}</h4>
+                    <div style={styles.analysisCategory}>
+                        <strong>Strengths:</strong>
+                        <ul>{evaluation.detailed_analysis[speaker].strengths.map((item, i) => <li key={i}>{item}</li>)}</ul>
+                    </div>
+                    <div style={styles.analysisCategory}>
+                        <strong>Weaknesses:</strong>
+                        <ul>{evaluation.detailed_analysis[speaker].weaknesses.map((item, i) => <li key={i}>{item}</li>)}</ul>
+                    </div>
+                    {evaluation.detailed_analysis[speaker].logical_fallacies.length > 0 && (
+                        <div style={styles.analysisCategory}>
+                            <strong>Logical Fallacies Identified:</strong>
+                            {evaluation.detailed_analysis[speaker].logical_fallacies.map((fallacy, i) => (
+                                <div key={i} style={styles.fallacyCard}>
+                                    <strong>{fallacy.fallacy}:</strong> "{fallacy.quote}"
+                                    <p><em>Explanation: {fallacy.explanation}</em></p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <div style={styles.analysisCategory}>
+                        <strong>Pivotal Moments:</strong>
+                        <ul>{evaluation.detailed_analysis[speaker].pivotal_moments.map((item, i) => <li key={i}>{item}</li>)}</ul>
+                    </div>
                 </div>
               ))}
             </div>
 
-            <div style={styles.winnerBanner}>
-              <div style={styles.winnerBannerGlow}></div>
-              <h3 style={styles.winnerText}>
-                <span>🏆</span>
-                Winner: {evaluation.winner}
-                <span>🎉</span>
-              </h3>
-            </div>
+            {evaluation.strategic_recommendations && (
+              <div style={styles.subsectionCard}>
+                <h3 style={styles.speakerHeader}>Strategic Recommendations</h3>
+                <p style={styles.summaryText}><strong>For Speaker 1:</strong> {evaluation.strategic_recommendations.speaker_1}</p>
+                <p style={styles.summaryText}><strong>For Speaker 2:</strong> {evaluation.strategic_recommendations.speaker_2}</p>
+              </div>
+            )}
+            
+            {evaluation.verdict_and_rationale && (
+                <div style={styles.verdictSection}>
+                    <h3 style={styles.sectionTitle}>Final Verdict</h3>
+                    <div style={styles.winnerBanner}>
+                        <div style={styles.winnerBannerGlow}></div>
+                        <h3 style={styles.winnerText}><span>🏆</span>Winner: {evaluation.verdict_and_rationale.winner}<span>🎉</span></h3>
+                    </div>
+                    <div style={styles.rationaleCard}>
+                        <h4 style={styles.speakerHeader}>Rationale</h4>
+                        <p style={styles.summaryText}>{evaluation.verdict_and_rationale.rationale}</p>
+                    </div>
+                </div>
+            )}
           </div>
         )}
 
-        {error && (
-          <div style={styles.errorCard}>
-            <p style={styles.errorText}>
-              <span>⚠️</span>
-              {error}
-            </p>
-          </div>
-        )}
+        {error && <div style={styles.errorCard}><p style={styles.errorText}><span>⚠️</span>{error}</p></div>}
       </div>
     </div>
   );
