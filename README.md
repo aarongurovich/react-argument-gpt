@@ -1,70 +1,72 @@
-# Getting Started with Create React App
+# React Argument GPT
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React Argument GPT is an AI-powered debate analysis application built with React. It records audio of a debate or argument, transcribes it using AssemblyAI (identifying distinct speakers), and then uses OpenAI's GPT-4o to act as an expert adjudicator—scoring the performance, identifying logical fallacies, and declaring a winner.
 
-## Available Scripts
+## Features
+
+* **Audio Recording:** Capture debate audio directly within the browser.
+* **Intelligent Transcription:** Uses **AssemblyAI** to transcribe audio with speaker identification (diarization), punctuation, and formatting.
+* **AI Adjudication:** Leverages **OpenAI's GPT-4o** to analyze transcripts with academic rigor.
+    * **Performance Scoring:** rates speakers (1-10) on Argumentation, Evidence, Rhetoric, Clarity, and Rebuttal.
+    * **Detailed Analysis:** Identifies specific strengths, weaknesses, and logical fallacies (e.g., Ad Hominem, Straw Man) with direct quotes.
+    * **Verdict:** Declares a winner with a detailed rationale.
+* **Strategic Recommendations:** Provides actionable advice for each speaker to improve their debating skills.
+
+## Tech Stack
+
+* **Frontend:** React, React Router.
+* **AI Services:**
+    * AssemblyAI (Speech-to-Text & Speaker Labels).
+    * OpenAI API (GPT-4o for Rhetorical Analysis).
+* **Utilities:** Axios (API requests), Simple Peer (WebRTC), Socket.io-client.
+
+## Getting Started
+
+Follow these steps to set up the project locally.
+
+### Prerequisites
+
+* Node.js and npm installed.
+* API Key from [AssemblyAI](https://www.assemblyai.com/).
+* API Key from [OpenAI](https://openai.com/).
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone [https://github.com/aarongurovich/react-argument-gpt.git](https://github.com/aarongurovich/react-argument-gpt.git)
+    cd react-argument-gpt
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+### Configuration
+
+Create a `.env` file in the root directory of the project to store your API keys.
+
+```env
+REACT_APP_ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
+REACT_APP_OPENAI_API_KEY=your_openai_api_key_here
+
+*Note: The application explicitly checks for these environment variables to function correctly.*
+
+### Running the Application
 
 In the project directory, you can run:
 
-### `npm start`
+```bash
+npm start
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Runs the app in the development mode. Open http://localhost:3000 to view it in your browser.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Available Scripts
+npm start: Runs the app in development mode.
 
-### `npm test`
+npm test: Launches the test runner.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+npm run build: Builds the app for production to the build folder.
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+npm run eject: Removes the single build dependency from your project (one-way operation).
