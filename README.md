@@ -50,7 +50,7 @@ Create a `.env` file in the root directory of the project to store your API keys
 ```env
 REACT_APP_ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
 REACT_APP_OPENAI_API_KEY=your_openai_api_key_here
-
+```
 *Note: The application explicitly checks for these environment variables to function correctly.*
 
 ### Running the Application
